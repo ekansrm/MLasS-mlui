@@ -1,37 +1,22 @@
 import React, {Component} from 'react';
 import { Grid, Jumbotron } from 'react-bootstrap';
-import Websocket from 'react-websocket';
-import FixedDataTable from 'fixed-data-table';
 
-
-
-const {Table, Column, Cell} = FixedDataTable;
-
-const TextCell = ({rowIndex, data, col, ...props}) => (
-  <Cell {...props}>
-    {(data[rowIndex])[col]}
-  </Cell>
-);
-
-const ColorCell = ({rowIndex, data, col, ...props}) => (
-  <Cell {...props}>
-    {colorizeBackground((data[rowIndex])[col])}
-  </Cell>
-);
-
-function colorizeBackground(diffValue){
-  if(diffValue < 0) return <span className='diff-red'>{diffValue}</span>;
-  return <span className='diff-green'>{diffValue}</span>;
-}
+// 'stomp' 版本有问题, 确实可以直接链上取的. 在npm的版本很久.
+import Stomp from 'stompjs/lib/stomp';
 
 class About extends Component{
 
-  state = {
-    page:1,
-    content:null
-  };
+  constructor(props) {
+    super(props);
+    this.state = {
+      content:null,
+      websocketAbout: null,
+      viewerCount: null
+    };
+    this.ws = null;
+  }
 
-  getDate(){
+  getAboutContent(){
     let URL='/about';
     let _this = this;
     fetch(URL)
@@ -51,90 +36,67 @@ class About extends Component{
       } )
   }
 
-
-
-  constructor(props) {
-    super(props);
-    this.state = {stocks: []};
-  }
-
-  handleData(data) {
+  handleWebSocketAboutData(data) {
     this.setState({
-      stocks:data
+      viewerCount:data
     });
-    console.log(data);
-    const results = JSON.parse(data);
-    let newStocks = this.state.stocks.splice(0);
-    results.forEach((result) => {
-      const stockIndex = newStocks.findIndex((stock) => {
-        return stock.id === result.id;
-      });
-      if(stockIndex !== -1){
-        const stock = newStocks[stockIndex];
-        const diff = parseFloat(result.l) - parseFloat(stock.l);
-        const newStock = Object.assign({'diff': diff}, result);
-        newStocks[stockIndex] = newStock;
-      }else{
-        const newStockWithZeroDiff = Object.assign({'diff': 0}, result);
-        newStocks.push(newStockWithZeroDiff);
-      }
-    });
-    this.setState({stocks: newStocks});
   }
-
 
   render() {
     return <Jumbotron>
       <Grid>
         <h1>About MLasS</h1>
+        <br/>
         <p>{ this.state.content }</p>
+        <br/>
         <div>
-          <Table
-            rowsCount={this.state.stocks.length}
-            rowHeight={50}
-            headerHeight={50}
-            width={1100}
-            height={500}
-            {...this.props}>
-            <Column
-              header={<Cell>Id</Cell>}
-              cell={<TextCell data={this.state.stocks} col="id" />}
-              fixed={false}
-              width={200}
-            />
-            <Column
-              header={<Cell>Ticker</Cell>}
-              cell={<TextCell data={this.state.stocks} col="t" />}
-              fixed={false}
-              width={200}
-            />
-            <Column
-              header={<Cell>Exchange</Cell>}
-              cell={<TextCell data={this.state.stocks} col="e" />}
-              fixed={false}
-              width={200}
-            />
-            <Column
-              header={<Cell>Price</Cell>}
-              cell={<TextCell data={this.state.stocks} col="l" />}
-              fixed={false}
-              width={200}
-            />
-            <Column
-              header={<Cell>Diff</Cell>}
-              cell={<ColorCell data={this.state.stocks} col="diff" />}
-              fixed={false}
-              width={300}
-            />
-          </Table>
-          <Websocket url='ws://localhost:9000/stocks/websocket' onMessage={this.handleData.bind(this)}  reconnect={true}/>
+          <div> <p className="text-center"> <small>当前浏览人数: { this.state.viewerCount }</small></p></div>
         </div>
       </Grid>
     </Jumbotron>
   }
 
   componentDidMount(){
-    this.getDate()
+    this.getAboutContent();
+    var socket = new WebSocket("ws://localhost:9000/about/websocket");
+    socket.onopen = (ent) => {
+      console.log(ent);
+      socket.send(123);
+      // 不要使用上面的socket
+      // var stompClient = Stomp.Stomp.over(new WebSocket("ws://localhost:9000/about/websocket"));
+      //
+      // stompClient.connect({}, function (frame) {
+      //   console.log('Connected: ' + frame);
+      //   stompClient.send("/app/hello", "abcde");
+      //   stompClient.subscribe('/topic/greetings', function (greeting) {
+      //     console.log(greeting)
+      //   });
+      // });
+    };
+
+    socket.onmessage = (ent) => {
+      console.log(ent);
+      this.handleWebSocketAboutData(ent.data);
+    };
+
+    socket.onclose = (ent) => {
+      console.log(ent);
+      socket.send('bye');
+    };
+
+    socket.onerror = (ent) => {
+      console.log(ent);
+    };
+    this.ws = socket;
+
+
+
+  }
+
+  componentWillUnmount() {
+
+    this.ws.close();
+
   }
 }
 
