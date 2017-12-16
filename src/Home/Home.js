@@ -5,7 +5,7 @@ class Home extends Component{
   render() {
     return <Jumbotron>
       <Grid>
-        <h1>Welcome to MLasS</h1>
+        <h1>Welcome to MLaaS</h1>
       </Grid>
     </Jumbotron>
   }
