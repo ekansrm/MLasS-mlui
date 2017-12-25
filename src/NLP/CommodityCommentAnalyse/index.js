@@ -76,7 +76,7 @@ class CommodityCommentAnalyse extends React.Component{
             this.state.predict < 0.5 ? <div className="text-danger">负面</div> : "负面"
           }
         </label>
-        <div className="col-xs-10 text-center">
+        <div className="col-xs-8 text-center">
           {
             this.state.predict ===0.5 ?
               <ProgressBar bsStyle="info" now={ 100 }/> :
