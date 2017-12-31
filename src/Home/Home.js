@@ -44,10 +44,10 @@ class Home extends React.Component{
 
         <p>
           主要组件:
-          <li><label>前端: node.js, react.js</label></li>
-          <li><label>后端: spring-boot</label></li>
-          <li><label>守护进程和反向代理: supervisor, tengine</label></li>
-          <li><label>ML: keras/tensorflow, deeplearning4j, weka</label></li>
+          <li>前端: node.js, react.js</li>
+          <li>后端: spring-boot</li>
+          <li>守护进程和反向代理: supervisor, tengine</li>
+          <li>ML: keras/tensorflow, deeplearning4j, weka</li>
         </p>
 
         <Modal show={this.state.showModal} onHide={this.close.bind(this)}>
